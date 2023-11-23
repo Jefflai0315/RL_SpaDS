@@ -12,7 +12,7 @@ def polygon_to_metres(polygon, center):
     polygon_meters_shapely = Polygon(list(zip(xs, ys)))
     return polygon_meters_shapely
 
-def resize_polygon(site, desired_scale=50, center=None):
+def resize_polygon(site, multiplier=False, desired_scale=50, center=None):
     X, Y = site.exterior.xy
     current_width = max(X) - min(X)
     current_height = max(Y) - min(Y)
@@ -24,6 +24,9 @@ def resize_polygon(site, desired_scale=50, center=None):
         center_y = current_height / 2
     else:
         center_x, center_y = center
+
+    if multiplier: 
+        scale_factor = multiplier
 
     scaled_polygon_x = [(x - min(X)) * scale_factor for x in X]
     scaled_polygon_y = [(y - min(Y)) * scale_factor for y in Y]
