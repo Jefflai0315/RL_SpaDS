@@ -1,19 +1,28 @@
 from shapely.geometry import Polygon
-from pyproj import Proj, transform
+from pyproj import Proj, transform, Transformer
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 def polygon_to_metres(polygon, center=(0,0)): 
-    in_crs = Proj(init='epsg:4326')
-    out_crs = Proj(init='epsg:32648')
-    polygon_meters = transform(in_crs, out_crs, *polygon.exterior.xy)
+    in_crs = Proj('epsg:4326')
+    out_crs = Proj('epsg:32648')
+    # polygon_meters = transform(in_crs, out_crs, *polygon.exterior.xy)
+    
+    transformer = Transformer.from_crs("epsg:4326", "epsg:32648", always_xy=True)
+    polygon_meters = transformer.transform(*polygon.exterior.xy)
     polygon = Polygon(list(zip(polygon_meters[0], polygon_meters[1])))
-    centroid_x, centroid_y = polygon.centroid.x, polygon.centroid.y 
-    xs = [x - centroid_x + center[0] for x in polygon_meters[0]]
-    ys = [y - centroid_y + center[1] for y in polygon_meters[1]]
+    # centroid_x=  polygon.centroid.x
+    # centroid_y = polygon.centroid.y 
+    # print(polygon.centroid)
+    # print(polygon.centroid.x)
+    # xs = [x - centroid_x + center[0] for x in polygon_meters[0]]
+    # ys = [y - centroid_y + center[1] for y in polygon_meters[1]]
+    
+    xs = [x - float(polygon.centroid.x)  for x in polygon_meters[0]]
+    ys = [y - float(polygon.centroid.y)   for y in polygon_meters[1]]
     polygon_meters_shapely = Polygon(list(zip(xs, ys)))
     return polygon_meters_shapely
 
-def resize_polygon(site, multiplier=False, desired_scale=50, center=None):
+def resize_polygon(site, multiplier=False, desired_scale=1, center=None):
     X, Y = site.exterior.xy
     current_width = max(X) - min(X)
     current_height = max(Y) - min(Y)
@@ -23,6 +32,7 @@ def resize_polygon(site, multiplier=False, desired_scale=50, center=None):
     if not center:
         center_x = current_width / 2
         center_y = current_height / 2
+
     else:
         center_x, center_y = center
 
@@ -42,6 +52,7 @@ def resize_polygon(site, multiplier=False, desired_scale=50, center=None):
     scaled_polygon = Polygon(list(zip(centered_polygon_x,centered_polygon_y)))
 
     return scaled_polygon
+    # return centered_polygon_x,centered_polygon_y
 
 def polygon_to_Poly3DCollection(polygon, height, config={"facecolors":"cyan", "linewidths":1, "edgecolors":"r", "alpha":0.5}): 
     """
